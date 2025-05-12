@@ -1,4 +1,4 @@
-// PersonModal.tsx - Versão corrigida
+// PersonModal.tsx - With current people display fixed
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import RNModal from 'react-native-modal';
@@ -251,6 +251,24 @@ export default function PersonModal({
       <View style={styles.modalBox}>
         <Text style={styles.modalTitle}>Adicionar Cliente</Text>
 
+        {/* SEÇÃO RECUPERADA: Mostrar pessoas já adicionadas à mesa */}
+        {people.length > 0 && (
+          <View style={localStyles.currentPeopleSection}>
+            <Text style={localStyles.currentPeopleTitle}>Clientes Atuais na Mesa:</Text>
+            <View style={localStyles.currentPeopleList}>
+              {people.map((p, i) => (
+                <View key={i} style={localStyles.currentPersonRow}>
+                  <Image source={{ uri: p.avatar }} style={localStyles.currentPersonAvatar} />
+                  <Text style={localStyles.currentPersonName}>{p.name}</Text>
+                  {p.paid && (
+                    <Icon name="check-circle" size={16} color="#4caf50" style={localStyles.paidIcon} />
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         <Image 
           source={{ uri: customAvatar || avatar }} 
           style={styles.avatar} 
@@ -296,8 +314,6 @@ export default function PersonModal({
     </RNModal>
   );
 }
-
-// ... rest of the styles remain the same ...
 
 const localStyles = StyleSheet.create({
   avatarButtonsRow: {
@@ -439,5 +455,45 @@ const localStyles = StyleSheet.create({
   },
   cancelButton: {
     flex: 0.48,
+  },
+  // ESTILOS RECUPERADOS: Para mostrar clientes atuais
+  currentPeopleSection: {
+    backgroundColor: COLORS.card,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  currentPeopleTitle: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  currentPeopleList: {
+    maxHeight: 120,
+  },
+  currentPersonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  currentPersonAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  currentPersonName: {
+    color: COLORS.primary,
+    fontSize: 14,
+    flex: 1,
+  },
+  paidIcon: {
+    marginLeft: 8,
   },
 });
