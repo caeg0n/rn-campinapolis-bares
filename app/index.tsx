@@ -1,7 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   FlatList,
   Image,
@@ -23,6 +22,7 @@ import ProductFormModal from "../components/ProductFormModal";
 import ProductModal from "../components/ProductModal";
 import ResetTableModal from "../components/ResetTableModal";
 import SaveHistoryModal from "../components/SaveHistoryModal";
+import SelectiveSyncModal from "../components/SelectiveSyncModal";
 import TableCell from "../components/TableCell";
 import { usePersistentPhotos } from "../hooks/usePersistentPhotos";
 import { HistoryItem, OrderItem, Product, Table } from "../types";
@@ -41,6 +41,80 @@ const DEFAULT_PRODUCTS = [
   { name: "Coquetel", price: 12 },
   { name: "Refrigerante", price: 3 },
   { name: "Água", price: 2 },
+  { name: "Burgcamp", price: 26 },
+  { name: "X-Tudo Duplo", price: 35 },
+  { name: "X-Tudo", price: 24 },
+  { name: "X-Bagunça", price: 20 },
+  { name: "X-Bacon", price: 20 },
+  { name: "X-Salada", price: 18 },
+  { name: "X-Salada Especial", price: 20 },
+  { name: "X-Kids", price: 15 },
+  { name: "Bauru", price: 15 },
+  { name: "Filé Mignon", price: 24 },
+  { name: "Filé Frango", price: 22 },
+  { name: "Paulista", price: 26 },
+  { name: "Pantaneiro", price: 26 },
+  { name: "Hambúrguer (extra)", price: 4 },
+  { name: "Calabresa (extra)", price: 4 },
+  { name: "Bacon (extra)", price: 4 },
+  { name: "Salsicha (extra)", price: 4 },
+  { name: "Ovo (extra)", price: 4 },
+  { name: "Catupiry (extra)", price: 4 },
+  { name: "Abacaxi (extra)", price: 4 },
+  { name: "Maionese Verde (extra)", price: 1 },
+  { name: "Batata Frita 300g", price: 20 },
+  { name: "Batata Frita Especial 300g", price: 30 },
+  { name: "Mandioca Frita 300g", price: 25 },
+  { name: "Costela Tambaqui 450g", price: 56 },
+  { name: "Camafreu 450g", price: 85 },
+  { name: "Panceta 350g", price: 60 },
+  { name: "Bolinho de Costela 350g", price: 60 },
+  { name: "Torresmo 100g", price: 25 },
+  { name: "Frango a Passarinho 500g", price: 40 },
+  { name: "Filé Tilápia 500g", price: 70 },
+  { name: "Isca de Frango 300g", price: 55 },
+  { name: "Arroz", price: 10 },
+  { name: "Feijão Tropeiro", price: 10 },
+  { name: "Maionese", price: 10 },
+  { name: "Mandioca", price: 8 },
+  { name: "Vinagrete", price: 10 },
+  { name: "Coca-Cola (lata)", price: 5 },
+  { name: "Coca-Cola Zero (lata)", price: 5 },
+  { name: "Guaraná Antarctica (lata)", price: 5 },
+  { name: "Fanta Laranja (lata)", price: 5 },
+  { name: "Refrigerante 1,5 L", price: 14 },
+  { name: "Suco 1 L", price: 12 },
+  { name: "Suco 100 % Uva 1 L", price: 18 },
+  { name: "Água de Coco 1 L", price: 20 },
+  { name: "Água sem gás", price: 4 },
+  { name: "Água com gás", price: 5 },
+  { name: "Suco 200 ml", price: 5 },
+  { name: "H2O", price: 8 },
+  { name: "H2O Limonete", price: 8 },
+  { name: "Cerveja lata (Brahma/Antarctica/Skol)", price: 5 },
+  { name: "Cerveja lata Original", price: 6 },
+  { name: "Long Neck Coronita/Budweiser", price: 10 },
+  { name: "Long Neck Skol Beats/Estella Artois", price: 12 },
+  { name: "Long Neck Heineken", price: 12 },
+  { name: "Garrafa 600 ml (Brahma/Antarctica/Skol)", price: 12 },
+  { name: "Garrafa 600 ml Original", price: 14 },
+  { name: "Garrafa 600 ml Heineken", price: 18 },
+  { name: "Chopp Brahma", price: 10 },
+  { name: "Mansão Maromba e Gelo (combo)", price: 60 },
+  { name: "Red Label (combo)", price: 300 },
+  { name: "Old Parr (combo)", price: 350 },
+  { name: "Dose Campari", price: 15 },
+  { name: "Dose White Horse", price: 15 },
+  { name: "Dose Red Label", price: 20 },
+  { name: "Dose Old Parr", price: 30 },
+  { name: "Ice", price: 14 },
+  { name: "Copo com Gelo", price: 0.5 },
+  { name: "Copo Especial", price: 2 },
+  { name: "CDB", price: 3 },
+  { name: "Cozumel", price: 5 },
+  { name: "Trident", price: 4 },
+  { name: "Halls", price: 4 },
+  { name: "Balde de Gelo", price: 12 },
 ];
 
 // Verificar se todas as pessoas de uma mesa pagaram
@@ -91,15 +165,10 @@ export default function App() {
   const [products, setProductsState] = useState<Product[]>(storedProducts);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [takenPhotos, setTakenPhotos] = useState<string[]>([]);
+  const [syncMenuVisible, setSyncMenuVisible] = useState(false);
+
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const {
-    isLoading: photosLoading,
-    error: photosError,
-    addPhoto,
-    removePhoto,
-    clearAllPhotos,
-    getPhotoStats,
-  } = usePersistentPhotos();
+  const { isLoading: photosLoading } = usePersistentPhotos();
 
   // Carregar histórico do AsyncStorage
   useEffect(() => {
@@ -137,7 +206,6 @@ export default function App() {
   useEffect(() => {
     if (tables.length > 0) {
       let needsUpdate = false;
-
       const updatedTables = tables.map((table) => {
         if (table.people && table.people.length > 0) {
           const updatedPeople = table.people.map((person) => {
@@ -151,7 +219,6 @@ export default function App() {
             }
             return person;
           });
-
           if (needsUpdate) {
             return { ...table, people: updatedPeople };
           }
@@ -233,8 +300,38 @@ export default function App() {
     }
   };
 
+  const handleRemoveProduct = (personIndex: number, productIndex: number) => {
+    if (!current) return;
+    const updatedTables = tables.map((table) => {
+      if (table.id !== current.id) return table;
+      const updatedPeople = table.people.map((person, pIndex) => {
+        if (pIndex !== personIndex) return person;
+        const updatedOrders = person.orders.filter(
+          (_, oIndex) => oIndex !== productIndex
+        );
+        const newBill = updatedOrders.reduce((sum, order) => {
+          return sum + order.product.price * order.quantity;
+        }, 0);
+        return {
+          ...person,
+          orders: updatedOrders,
+          bill: newBill,
+          paid: false,
+        };
+      });
+      return {
+        ...table,
+        people: updatedPeople,
+      };
+    });
+    setTables(updatedTables);
+  };
+
+  const handleSync = () => {
+    setSyncMenuVisible(true);
+  };
+
   const handleTablePress = (table: Table) => {
-    // Se a mesa não estiver habilitada, abre a configuração
     if (!table.enabled) {
       setConfigName(table.name);
       setConfigNumber(table.number);
@@ -242,13 +339,9 @@ export default function App() {
       setConfigVisible(true);
       return;
     }
-
-    // Se a mesa estiver habilitada
     if (current && current.id === table.id) {
-      // Se for a mesa já selecionada, desmarca
       setCurrent(null);
     } else {
-      // Seleciona a mesa
       setCurrent(table);
     }
   };
@@ -402,12 +495,12 @@ export default function App() {
     }
   };
 
+  // Original handleCloseBill function for index.tsx
+
   const handleCloseBill = () => {
     if (!current) return;
-
     // Verifica se todas as pessoas estão marcadas como pagas
     const allPaid = current.people.every((person) => person.paid);
-
     if (allPaid) {
       // Se todos já estão pagos, perguntar se quer salvar no histórico
       setTableToSaveHistory(current);
@@ -416,15 +509,11 @@ export default function App() {
       // Marca todas as pessoas como pagas
       const updated = tables.map((t) => {
         if (t.id !== current.id) return t;
-
         const people = t.people.map((p) => ({ ...p, paid: true }));
-
         return { ...t, people };
       });
-
       setTables(updated);
     }
-
     // Fecha o modal de conta
     setBillingVisible(false);
   };
@@ -458,22 +547,6 @@ export default function App() {
     );
     setTables(updated);
     setEditVisible(false);
-  };
-
-  const clearTakenPhotos = async () => {
-    try {
-      await AsyncStorage.removeItem(TAKEN_PHOTOS_STORAGE_KEY);
-      setTakenPhotos([]);
-    } catch (error) {
-      console.error("Erro ao limpar fotos:", error);
-    }
-  };
-
-  const handleClearPhotos = () => {
-    Alert.alert("Limpar Fotos", "Deseja remover todas as fotos tiradas?", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Sim", onPress: clearTakenPhotos },
-    ]);
   };
 
   const openPerson = () => {
@@ -520,32 +593,6 @@ export default function App() {
     );
     setTables(updated);
     setPersonVisible(false);
-  };
-
-  const handleManagePhotos = () => {
-    const stats = getPhotoStats();
-
-    Alert.alert(
-      "Gerenciar Fotos",
-      `Total: ${stats.totalPhotos} fotos\nTamanho: ${stats.totalSizeKB} KB`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Limpar Todas",
-          style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Confirmar",
-              "Deseja realmente remover todas as fotos tiradas?",
-              [
-                { text: "Cancelar", style: "cancel" },
-                { text: "Sim", onPress: clearAllPhotos },
-              ]
-            );
-          },
-        },
-      ]
-    );
   };
 
   const startAssignProduct = (prod: Product) => {
@@ -605,30 +652,14 @@ export default function App() {
     setPendingProduct(null);
   };
 
-  const assignProductToTableOnly = () => {
-    if (!current || !pendingProduct) return;
-    const updated = tables.map((t) =>
-      t.id === current.id
-        ? { ...t, products: [...t.products, pendingProduct] }
-        : t
-    );
-    setTables(updated);
-    setAssignVisible(false);
-    setPendingProduct(null);
-  };
-
   const openBilling = () => {
     if (!current) return;
-
-    // Certifica-se de que estamos usando os dados mais recentes do store
     const freshTable = tables.find((t) => t.id === current.id);
     if (freshTable) {
-      // Seleciona apenas pessoas não pagas
       const nonPaidIndices = freshTable.people
         .map((person, index) => ({ person, index }))
         .filter((item) => !item.person.paid)
         .map((item) => item.index);
-
       setSelectedPeople(nonPaidIndices);
     }
     setBillingVisible(true);
@@ -643,23 +674,46 @@ export default function App() {
     setProductFormVisible(true);
   };
 
+  const handleRemoveProducts = (tableId: number, personIndex: number, orderIndices: number[]) => {
+  const updatedTables = tables.map((table) => {
+    if (table.id !== tableId) return table;
+    const updatedPeople = table.people.map((person, pIndex) => {
+      if (pIndex !== personIndex) return person;      
+      // Remove the selected orders (in reverse order to maintain indices)
+      const updatedOrders = person.orders.filter((_, orderIndex) => 
+        !orderIndices.includes(orderIndex)
+      );
+      // Recalculate the bill
+      const newBill = updatedOrders.reduce((sum, order) => {
+        return sum + (order.product.price * order.quantity);
+      }, 0);
+      return {
+        ...person,
+        orders: updatedOrders,
+        bill: newBill,
+        paid: false // Mark as unpaid when items are removed
+      };
+    });
+    return {
+      ...table,
+      people: updatedPeople
+    };
+  });
+  setTables(updatedTables);
+};
+
   const handleSaveProduct = (product: Product) => {
     const existingIndex = products.findIndex((p) => p.name === product.name);
-
     let updatedProducts: Product[];
-
     if (existingIndex >= 0) {
-      // Atualizar produto existente
       updatedProducts = [
         ...products.slice(0, existingIndex),
         product,
         ...products.slice(existingIndex + 1),
       ];
     } else {
-      // Adicionar novo produto
       updatedProducts = [...products, product];
     }
-
     setProducts(updatedProducts);
   };
 
@@ -772,6 +826,7 @@ export default function App() {
           handleSetPersonPaid(current.id, index, isPaid);
         }}
         onCloseBill={handleCloseBill}
+        onRemoveProduct={handleRemoveProduct} // Add this line
       />
 
       <ResetTableModal
@@ -814,12 +869,6 @@ export default function App() {
             </TouchableOpacity>
           ))}
           <TouchableOpacity
-            style={styles.btn}
-            onPress={assignProductToTableOnly}
-          >
-            <Text style={styles.btnText}>Apenas para a Mesa</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             style={styles.cancelBtn}
             onPress={() => setAssignVisible(false)}
           >
@@ -839,8 +888,15 @@ export default function App() {
         <BottomMenu
           onManageProducts={handleManageProducts}
           onViewHistory={handleViewHistory}
+          onSync={handleSync}
         />
       )}
+      <SelectiveSyncModal
+        visible={syncMenuVisible}
+        onClose={() => setSyncMenuVisible(false)}
+        tables={tables}
+        onRemoveProduct={handleRemoveProducts}
+      />
     </SafeAreaView>
   );
 }

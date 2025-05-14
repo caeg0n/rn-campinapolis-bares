@@ -1,9 +1,10 @@
-// PersonModal.tsx - With current people display fixed
+// components/PersonModal.tsx - With scrollable people list
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import RNModal from 'react-native-modal';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import styles, { COLORS } from '../app/styles';
+import { PersonModalStyles } from '../styles/PersonModalStyles';
 import { Person } from '../types';
 import CameraView from './CameraView';
 
@@ -123,14 +124,14 @@ export default function PersonModal({
   const renderAvatarItem = ({ item, index }: { item: string; index: number }) => (
     <TouchableOpacity 
       style={[
-        localStyles.avatarOption,
-        previewAvatar === item && localStyles.selectedAvatarOption
+        PersonModalStyles.avatarOption,
+        previewAvatar === item && PersonModalStyles.selectedAvatarOption
       ]}
       onPress={() => handlePreviewAvatar(item)}
     >
-      <Image source={{ uri: item }} style={localStyles.avatarOptionImage} />
+      <Image source={{ uri: item }} style={PersonModalStyles.avatarOptionImage} />
       {previewAvatar === item && (
-        <View style={localStyles.selectedIndicator}>
+        <View style={PersonModalStyles.selectedIndicator}>
           <Icon name="check-circle" size={20} color={COLORS.primary} />
         </View>
       )}
@@ -146,31 +147,31 @@ export default function PersonModal({
   if (showAvatarSelection) {
     return (
       <RNModal isVisible={true} backdropColor={COLORS.secondary} backdropOpacity={0.8}>
-        <View style={localStyles.selectionModalBox}>
+        <View style={PersonModalStyles.selectionModalBox}>
           <Text style={styles.modalTitle}>Escolher Avatar</Text>
           
           {/* Preview Section */}
-          <View style={localStyles.previewSection}>
+          <View style={PersonModalStyles.previewSection}>
             <Image 
               source={{ uri: previewAvatar || customAvatar || avatar }} 
-              style={localStyles.previewAvatar} 
+              style={PersonModalStyles.previewAvatar} 
             />
-            <Text style={localStyles.previewText}>Preview</Text>
+            <Text style={PersonModalStyles.previewText}>Preview</Text>
           </View>
           
           {/* Tab Selector */}
-          <View style={localStyles.tabContainer}>
+          <View style={PersonModalStyles.tabContainer}>
             <TouchableOpacity 
               style={[
-                localStyles.tab, 
-                selectedTab === 'online' && localStyles.activeTab
+                PersonModalStyles.tab, 
+                selectedTab === 'online' && PersonModalStyles.activeTab
               ]}
               onPress={() => setSelectedTab('online')}
             >
               <Icon name="public" size={20} color={selectedTab === 'online' ? 'black' : COLORS.primary} />
               <Text style={[
-                localStyles.tabText,
-                selectedTab === 'online' && localStyles.activeTabText
+                PersonModalStyles.tabText,
+                selectedTab === 'online' && PersonModalStyles.activeTabText
               ]}>
                 Online ({onlineAvatars.length})
               </Text>
@@ -178,15 +179,15 @@ export default function PersonModal({
             
             <TouchableOpacity 
               style={[
-                localStyles.tab, 
-                selectedTab === 'taken' && localStyles.activeTab
+                PersonModalStyles.tab, 
+                selectedTab === 'taken' && PersonModalStyles.activeTab
               ]}
               onPress={() => setSelectedTab('taken')}
             >
               <Icon name="photo-library" size={20} color={selectedTab === 'taken' ? 'black' : COLORS.primary} />
               <Text style={[
-                localStyles.tabText,
-                selectedTab === 'taken' && localStyles.activeTabText
+                PersonModalStyles.tabText,
+                selectedTab === 'taken' && PersonModalStyles.activeTabText
               ]}>
                 Fotos ({availableTakenPhotos.length})
               </Text>
@@ -194,14 +195,14 @@ export default function PersonModal({
           </View>
           
           {/* Content - FlatList without ScrollView wrapper */}
-          <View style={localStyles.listContainer}>
+          <View style={PersonModalStyles.listContainer}>
             {selectedTab === 'online' ? (
               <FlatList
                 data={onlineAvatars}
                 numColumns={4}
                 keyExtractor={(item, index) => `online-${index}`}
                 renderItem={renderAvatarItem}
-                style={localStyles.flatList}
+                style={PersonModalStyles.flatList}
                 showsVerticalScrollIndicator={false}
               />
             ) : (
@@ -211,23 +212,23 @@ export default function PersonModal({
                   numColumns={4}
                   keyExtractor={(item, index) => `taken-${index}`}
                   renderItem={renderAvatarItem}
-                  style={localStyles.flatList}
+                  style={PersonModalStyles.flatList}
                   showsVerticalScrollIndicator={false}
                 />
               ) : (
-                <View style={localStyles.emptySection}>
+                <View style={PersonModalStyles.emptySection}>
                   <Icon name="no-photography" size={64} color={COLORS.disabled} />
-                  <Text style={localStyles.emptyText}>Nenhuma foto tirada ainda</Text>
-                  <Text style={localStyles.emptySubtext}>Tire uma foto primeiro usando a câmera</Text>
+                  <Text style={PersonModalStyles.emptyText}>Nenhuma foto tirada ainda</Text>
+                  <Text style={PersonModalStyles.emptySubtext}>Tire uma foto primeiro usando a câmera</Text>
                 </View>
               )
             )}
           </View>
           
           {/* Action Buttons */}
-          <View style={localStyles.actionButtonsRow}>
+          <View style={PersonModalStyles.actionButtonsRow}>
             <TouchableOpacity 
-              style={[styles.btn, localStyles.confirmButton]}
+              style={[styles.btn, PersonModalStyles.confirmButton]}
               onPress={handleConfirmAvatar}
               disabled={!previewAvatar}
             >
@@ -235,7 +236,7 @@ export default function PersonModal({
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.cancelBtn, localStyles.cancelButton]} 
+              style={[styles.cancelBtn, PersonModalStyles.cancelButton]} 
               onPress={handleCloseAvatarSelection}
             >
               <Text style={styles.cancelBtnText}>CANCELAR</Text>
@@ -251,21 +252,27 @@ export default function PersonModal({
       <View style={styles.modalBox}>
         <Text style={styles.modalTitle}>Adicionar Cliente</Text>
 
-        {/* SEÇÃO RECUPERADA: Mostrar pessoas já adicionadas à mesa */}
+        {/* SEÇÃO SCROLLAVEL: Mostrar pessoas já adicionadas à mesa */}
         {people.length > 0 && (
-          <View style={localStyles.currentPeopleSection}>
-            <Text style={localStyles.currentPeopleTitle}>Clientes Atuais na Mesa:</Text>
-            <View style={localStyles.currentPeopleList}>
-              {people.map((p, i) => (
-                <View key={i} style={localStyles.currentPersonRow}>
-                  <Image source={{ uri: p.avatar }} style={localStyles.currentPersonAvatar} />
-                  <Text style={localStyles.currentPersonName}>{p.name}</Text>
-                  {p.paid && (
-                    <Icon name="check-circle" size={16} color="#4caf50" style={localStyles.paidIcon} />
-                  )}
-                </View>
-              ))}
-            </View>
+          <View style={PersonModalStyles.currentPeopleSection}>
+            <Text style={PersonModalStyles.currentPeopleTitle}>Clientes Atuais na Mesa ({people.length}):</Text>
+            <ScrollView 
+              style={PersonModalStyles.currentPeopleScrollContainer}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+            >
+              <View style={PersonModalStyles.currentPeopleList}>
+                {people.map((p, i) => (
+                  <View key={i} style={PersonModalStyles.currentPersonRow}>
+                    <Image source={{ uri: p.avatar }} style={PersonModalStyles.currentPersonAvatar} />
+                    <Text style={PersonModalStyles.currentPersonName}>{p.name}</Text>
+                    {p.paid && (
+                      <Icon name="check-circle" size={16} color="#4caf50" style={PersonModalStyles.paidIcon} />
+                    )}
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
           </View>
         )}
 
@@ -274,21 +281,21 @@ export default function PersonModal({
           style={styles.avatar} 
         />
         
-        <View style={localStyles.avatarButtonsRow}>
+        <View style={PersonModalStyles.avatarButtonsRow}>
           <TouchableOpacity 
-            style={localStyles.avatarButton} 
+            style={PersonModalStyles.avatarButton} 
             onPress={handleOpenAvatarSelection}
           >
-            <Icon name="collections" size={16} color={COLORS.primary} style={localStyles.buttonIcon} />
-            <Text style={localStyles.buttonText}>ESCOLHER AVATAR</Text>
+            <Icon name="collections" size={16} color={COLORS.primary} style={PersonModalStyles.buttonIcon} />
+            <Text style={PersonModalStyles.buttonText}>ESCOLHER AVATAR</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={localStyles.avatarButton} 
+            style={PersonModalStyles.avatarButton} 
             onPress={handleOpenCamera}
           >
-            <Icon name="camera-alt" size={16} color={COLORS.primary} style={localStyles.buttonIcon} />
-            <Text style={localStyles.buttonText}>TIRAR FOTO</Text>
+            <Icon name="camera-alt" size={16} color={COLORS.primary} style={PersonModalStyles.buttonIcon} />
+            <Text style={PersonModalStyles.buttonText}>TIRAR FOTO</Text>
           </TouchableOpacity>
         </View>
 
@@ -301,7 +308,7 @@ export default function PersonModal({
         />
 
         <TouchableOpacity 
-          style={[styles.btn, !name && localStyles.disabledButton]} 
+          style={[styles.btn, !name && PersonModalStyles.disabledButton]} 
           onPress={handleSave}
           disabled={!name}
         >
@@ -314,186 +321,3 @@ export default function PersonModal({
     </RNModal>
   );
 }
-
-const localStyles = StyleSheet.create({
-  avatarButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginVertical: 8,
-  },
-  avatarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 4,
-    flex: 0.48,
-    justifyContent: 'center',
-  },
-  buttonIcon: {
-    marginRight: 4,
-  },
-  buttonText: {
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  selectionModalBox: {
-    backgroundColor: COLORS.card,
-    borderRadius: 10,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    maxHeight: '90%',
-  },
-  previewSection: {
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  previewAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  previewText: {
-    color: COLORS.primary,
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: 15,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    backgroundColor: COLORS.secondary,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  activeTab: {
-    backgroundColor: COLORS.primary,
-  },
-  tabText: {
-    color: COLORS.primary,
-    marginLeft: 8,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  activeTabText: {
-    color: 'black',
-  },
-  listContainer: {
-    height: 300, // Fixed height instead of ScrollView
-  },
-  flatList: {
-    flex: 1,
-  },
-  avatarOption: {
-    margin: 5,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    position: 'relative',
-  },
-  selectedAvatarOption: {
-    borderColor: COLORS.primary,
-    transform: [{ scale: 0.95 }],
-  },
-  avatarOptionImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 6,
-  },
-  selectedIndicator: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
-    padding: 2,
-  },
-  emptySection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 200,
-  },
-  emptyText: {
-    color: COLORS.primary,
-    fontSize: 16,
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    color: COLORS.disabled,
-    fontSize: 12,
-    marginTop: 5,
-    textAlign: 'center',
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 15,
-  },
-  confirmButton: {
-    flex: 0.48,
-  },
-  cancelButton: {
-    flex: 0.48,
-  },
-  // ESTILOS RECUPERADOS: Para mostrar clientes atuais
-  currentPeopleSection: {
-    backgroundColor: COLORS.card,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  currentPeopleTitle: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  currentPeopleList: {
-    maxHeight: 120,
-  },
-  currentPersonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  currentPersonAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  currentPersonName: {
-    color: COLORS.primary,
-    fontSize: 14,
-    flex: 1,
-  },
-  paidIcon: {
-    marginLeft: 8,
-  },
-});

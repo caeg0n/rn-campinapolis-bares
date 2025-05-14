@@ -16,6 +16,7 @@ interface Props {
   onClosePerson?: (i: number) => void;
   onSetPersonPaid: (index: number, isPaid: boolean) => void;
   onCloseBill: () => void;
+  onRemoveProduct?: (personIndex: number, productIndex: number) => void; // New prop
 }
 
 export default function BillingModal({
@@ -27,7 +28,8 @@ export default function BillingModal({
   onClose,
   onClosePerson,
   onSetPersonPaid,
-  onCloseBill
+  onCloseBill,
+  onRemoveProduct  // New prop
 }: Props) {
   const [expandedPerson, setExpandedPerson] = useState<number | null>(null);
   const [closeBillMode, setCloseBillMode] = useState(false);
@@ -208,9 +210,19 @@ export default function BillingModal({
                               <Text style={localStyles.productQuantity}>{order.quantity}x</Text>
                               <Text style={localStyles.productName}>{order.product.name}</Text>
                             </View>
-                            <Text style={localStyles.productPrice}>
-                              {formatCurrency(order.product.price * order.quantity)}
-                            </Text>
+                            <View style={localStyles.productActions}>
+                              <Text style={localStyles.productPrice}>
+                                {formatCurrency(order.product.price * order.quantity)}
+                              </Text>
+                              {onRemoveProduct && (
+                                <TouchableOpacity 
+                                  style={localStyles.removeProductButton}
+                                  onPress={() => onRemoveProduct(originalIndex, idx)}
+                                >
+                                  <Icon name="delete" size={18} color="#ff4444" />
+                                </TouchableOpacity>
+                              )}
+                            </View>
                           </View>
                         ))}
                       </View>
@@ -357,6 +369,11 @@ const localStyles = StyleSheet.create({
   productInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  productActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   productQuantity: {
     color: 'rgba(255, 215, 0, 0.8)',
@@ -366,10 +383,17 @@ const localStyles = StyleSheet.create({
   productName: {
     color: 'rgba(255, 215, 0, 0.8)',
     fontSize: 12,
+    flex: 1,
   },
   productPrice: {
     color: 'rgba(255, 215, 0, 0.8)',
     fontSize: 12,
+    marginRight: 10,
+  },
+  removeProductButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 68, 68, 0.1)',
   },
   remainingContainer: {
     backgroundColor: COLORS.primary,
