@@ -1,25 +1,25 @@
-// styles/SelectiveSyncModalStyles.ts - Updated with better button layout
+// styles/MainSyncModalStyles.ts - Main modal for sync steps
 import { StyleSheet } from 'react-native';
 import { COLORS } from '../app/styles';
 
-export const SelectiveSyncModalStyles = StyleSheet.create({
+export const MainSyncModalStyles = StyleSheet.create({
   modalContainer: {
     backgroundColor: '#111',
     borderRadius: 10,
     padding: 15,
-    maxHeight: '95%',
-    minHeight: 400,
     borderWidth: 1,
     borderColor: COLORS.primary,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+    flex: 1,
+    marginVertical: 20,
+    marginHorizontal: 15,
+    maxHeight: '95%',
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.primary,
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   stepTitle: {
     fontSize: 14,
@@ -235,7 +235,6 @@ export const SelectiveSyncModalStyles = StyleSheet.create({
     paddingHorizontal: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
     minHeight: 48,
   },
   cancelButtonText: {
@@ -325,108 +324,57 @@ export const SelectiveSyncModalStyles = StyleSheet.create({
     marginLeft: 8,
   },
   
-  // Confirmation overlay styles
-  confirmOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  confirmModal: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 350,
-  },
-  confirmTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginTop: 15,
-    textAlign: 'center',
-  },
-  confirmMessage: {
-    fontSize: 14,
-    color: 'rgba(255, 215, 0, 0.8)',
-    textAlign: 'center',
-    marginVertical: 15,
-    lineHeight: 20,
-  },
-  confirmInstruction: {
-    fontSize: 12,
-    color: '#FFA500',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: 20,
-    lineHeight: 16,
-  },
-  confirmButtons: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-  },
-  cancelConfirmButton: {
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: 'center',
-  },
-  cancelConfirmButtonText: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  proceedConfirmButton: {
-    backgroundColor: '#d32f2f',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: 'center',
-  },
-  proceedConfirmButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  
-  // Receive container styles
-  receiveContainer: {
+  // Receive Data Modal - Responsive Layout
+  receiveModalContent: {
     alignItems: 'center',
     paddingVertical: 20,
     flex: 1,
+    justifyContent: 'space-between',
+  },
+  receiveQRIcon: {
+    marginBottom: 15,
   },
   receiveTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginTop: 15,
     textAlign: 'center',
+    marginBottom: 15,
   },
-  receiveText: {
+  receiveDescription: {
     fontSize: 14,
     color: 'rgba(255, 215, 0, 0.8)',
     textAlign: 'center',
-    marginVertical: 10,
     lineHeight: 20,
+    marginBottom: 20,
+    paddingHorizontal: 20,
   },
-  receiveInstructions: {
+  receiveInfoBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    width: '100%',
+    flex: 1,
+    minHeight: 120,
+  },
+  receiveInfoBoxTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: COLORS.primary,
     textAlign: 'center',
-    marginTop: 15,
-    marginBottom: 5,
+    marginBottom: 10,
+  },
+  receiveInfoText: {
+    fontSize: 14,
+    color: 'rgba(255, 215, 0, 0.8)',
+    lineHeight: 22,
+  },
+  receiveButtonsContainer: {
+    width: '100%',
+    marginTop: 'auto',
   },
   scanButton: {
     backgroundColor: COLORS.primary,
@@ -434,15 +382,29 @@ export const SelectiveSyncModalStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 15,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    marginTop: 20,
+    borderRadius: 10,
+    marginBottom: 10,
+    width: '100%',
   },
   scanButtonText: {
     color: 'black',
     fontWeight: 'bold',
     fontSize: 16,
     marginLeft: 8,
+  },
+  voltarButton: {
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  voltarButtonText: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   
   // Received data styles
@@ -480,81 +442,127 @@ export const SelectiveSyncModalStyles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // Import confirmation styles
+  // Import confirmation styles - COMPLETE REWRITE
+  importModalContent: {
+    flex: 1,
+  },
+  importScrollContent: {
+    paddingBottom: 20,
+    paddingRight: 10, // Add padding for custom scroll indicator
+  },
+  // Custom scroll indicator container
+  scrollIndicatorContainer: {
+    position: 'absolute',
+    right: 2,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    borderRadius: 2,
+  },
+  scrollIndicatorThumb: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
+    width: 4,
+  },
   importConfirmContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
-    flex: 1,
+    paddingVertical: 10,
+  },
+  importIconContainer: {
+    marginBottom: 20,
   },
   importTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginTop: 15,
+    marginBottom: 10,
     textAlign: 'center',
   },
   importSubtitle: {
     fontSize: 14,
     color: 'rgba(255, 215, 0, 0.8)',
     textAlign: 'center',
-    marginVertical: 10,
+    marginBottom: 20,
     lineHeight: 20,
+    paddingHorizontal: 10,
   },
   importDetailsContainer: {
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
     borderRadius: 8,
     padding: 15,
-    marginVertical: 15,
+    marginBottom: 15,
     width: '100%',
-    maxHeight: '70%',
-    flex: 1,
+  },
+  importDetailRow: {
+    marginBottom: 12,
   },
   importDetailLabel: {
     fontSize: 14,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginTop: 10,
+    marginBottom: 3,
   },
   importDetailValue: {
     fontSize: 13,
     color: 'rgba(255, 215, 0, 0.9)',
-    marginTop: 2,
-    marginBottom: 5,
-    flexWrap: 'wrap',
+    lineHeight: 16,
+  },
+  importProductsSection: {
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  importProductsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 6,
   },
   importProductItem: {
     fontSize: 12,
     color: 'rgba(255, 215, 0, 0.8)',
-    marginLeft: 10,
+    marginLeft: 8,
     marginVertical: 2,
-    flexWrap: 'wrap',
+    lineHeight: 14,
   },
-  importTotalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 10,
+  importTotalSection: {
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 215, 0, 0.3)',
   },
+  importTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   importTotalLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   importTotalValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
+  importWarningContainer: {
+    paddingHorizontal: 15,
+    marginBottom: 15,
+  },
   importWarning: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#FFA500',
     textAlign: 'center',
     fontStyle: 'italic',
-    marginTop: 10,
-    lineHeight: 16,
+    lineHeight: 14,
+  },
+  importButtonsContainer: {
+    flexDirection: 'column',
+    gap: 10,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 215, 0, 0.2)',
   },
   importConfirmButton: {
     backgroundColor: COLORS.primary,
@@ -564,13 +572,14 @@ export const SelectiveSyncModalStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderRadius: 8,
-    flex: 1.3,
     minHeight: 48,
+    width: '100%',
   },
   importConfirmButtonText: {
     color: 'black',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 12,
     marginLeft: 8,
+    textAlign: 'center',
   },
 });

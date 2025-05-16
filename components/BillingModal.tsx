@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import RNModal from 'react-native-modal';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from '../app/styles';
+import { BillingModalStyles as styles } from '../styles/BillingModalStyles';
 import { Person } from '../types';
 import { formatCurrency } from '../utils/currencyMask';
 
@@ -16,7 +17,7 @@ interface Props {
   onClosePerson?: (i: number) => void;
   onSetPersonPaid: (index: number, isPaid: boolean) => void;
   onCloseBill: () => void;
-  onRemoveProduct?: (personIndex: number, productIndex: number) => void; // New prop
+  onRemoveProduct?: (personIndex: number, productIndex: number) => void;
 }
 
 export default function BillingModal({
@@ -29,19 +30,30 @@ export default function BillingModal({
   onClosePerson,
   onSetPersonPaid,
   onCloseBill,
-  onRemoveProduct  // New prop
+  onRemoveProduct
 }: Props) {
   const [expandedPerson, setExpandedPerson] = useState<number | null>(null);
   const [closeBillMode, setCloseBillMode] = useState(false);
 
-  // Pessoas que não estão marcadas como pagas
-  const activePeople = people.filter(person => !person.paid);
+  // Check if person was imported via QR (has any imported orders)
+  const isImportedPerson = (person: Person): boolean => {
+    return person.orders?.some(order => order.importedViaQR === true) ?? false;
+  };
+
+  // Check if order was imported via QR code
+  const isImportedOrder = (order: any): boolean => {
+    return order.importedViaQR === true;
+  };
+
+  // Separate people into local and imported
+  const localPeople = people.filter(person => !person.paid && !isImportedPerson(person));
+  const importedPeople = people.filter(person => !person.paid && isImportedPerson(person));
   
   // Cálculo do total levando em conta apenas pessoas selecionadas
   const total = selectedPeople.reduce((sum, i) => sum + (people[i]?.bill || 0), 0);
 
   // Total restante a pagar (todas as pessoas não pagas)
-  const remainingTotal = activePeople.reduce((sum, p) => sum + p.bill, 0);
+  const remainingTotal = [...localPeople, ...importedPeople].reduce((sum, p) => sum + p.bill, 0);
 
   const toggleExpand = (index: number) => {
     if (expandedPerson === index) {
@@ -65,42 +77,159 @@ export default function BillingModal({
     return selectedPeople.includes(index);
   };
 
+  // Render person section
+  const renderPersonSection = (sectionPeople: Person[], sectionTitle: string, iconName: string, iconColor: string) => {
+    if (sectionPeople.length === 0) return null;
+
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Icon name={iconName} size={20} color={iconColor} />
+          <Text style={styles.sectionTitle}>{sectionTitle}</Text>
+          <Text style={styles.sectionCount}>({sectionPeople.length})</Text>
+        </View>
+        
+        {sectionPeople.map((person, index) => {
+          // Find original index in the complete people array
+          const originalIndex = people.findIndex(p => p === person);
+          
+          return (
+            <View key={originalIndex} style={styles.sectionPerson}>
+              <View style={styles.personRow}>
+                <TouchableOpacity 
+                  style={styles.checkbox}
+                  onPress={() => onToggle(originalIndex)}
+                >
+                  {isSelected(originalIndex) ? (
+                    <Icon name="check-box" size={24} color={COLORS.primary} />
+                  ) : (
+                    <Icon name="check-box-outline-blank" size={24} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.personInfo}
+                  onPress={() => toggleExpand(originalIndex)}
+                >
+                  <Image source={{ uri: person.avatar }} style={styles.avatar} />
+                  <View style={styles.personNameContainer}>
+                    <Text style={styles.personName}>{person.name}</Text>
+                    {isImportedPerson(person) && (
+                      <View style={styles.importBadge}>
+                        <Icon name="qr-code" size={12} color="#4CAF50" />
+                        <Text style={styles.importBadgeText}>IMPORTADO</Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+                
+                <View style={styles.personActions}>
+                  {hasOrders(person) && (
+                    <TouchableOpacity 
+                      onPress={() => toggleExpand(originalIndex)}
+                      style={styles.expandButton}
+                    >
+                      <Icon 
+                        name={expandedPerson === originalIndex ? "arrow-drop-up" : "arrow-drop-down"} 
+                        size={24} 
+                        color={COLORS.primary} 
+                      />
+                    </TouchableOpacity>
+                  )}
+                  <Text style={[
+                    styles.price, 
+                    !isSelected(originalIndex) && styles.priceUnselected
+                  ]}>
+                    {formatCurrency(person.bill)}
+                  </Text>
+                </View>
+              </View>
+
+              {expandedPerson === originalIndex && hasOrders(person) && (
+                <View style={styles.productsList}>
+                  {person.orders.map((order, idx) => (
+                    <View key={idx} style={[
+                      styles.productRow,
+                      isImportedOrder(order) && styles.importedProductRow
+                    ]}>
+                      <View style={styles.productInfo}>
+                        <Text style={styles.productQuantity}>{order.quantity}x</Text>
+                        <Text style={styles.productName}>{order.product.name}</Text>
+                        {isImportedOrder(order) && (
+                          <View style={styles.productImportBadge}>
+                            <Icon name="qr-code" size={10} color="#4CAF50" />
+                            <Text style={styles.productImportText}>QR</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.productActions}>
+                        <Text style={styles.productPrice}>
+                          {formatCurrency(order.product.price * order.quantity)}
+                        </Text>
+                        {onRemoveProduct && (
+                          <TouchableOpacity 
+                            style={styles.removeProductButton}
+                            onPress={() => onRemoveProduct(originalIndex, idx)}
+                          >
+                            <Icon name="delete" size={18} color="#ff4444" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   if (closeBillMode) {
     // Modo de fechamento de conta
     return (
       <RNModal isVisible={visible} backdropColor="black" backdropOpacity={0.8}>
-        <View style={localStyles.modalBox}>
-          <Text style={localStyles.modalTitle}>
+        <View style={styles.modalBox}>
+          <Text style={styles.modalTitle}>
             FECHAR CONTA DA MESA {tableNumber}
           </Text>
           
-          <View style={localStyles.content}>
+          <View style={styles.content}>
             {people.map((p, i) => (
               <View key={i}>
                 <View style={[
-                  localStyles.personRow,
-                  p.paid && localStyles.paidRow
+                  styles.personRow,
+                  p.paid && styles.paidRow
                 ]}>
-                  <View style={localStyles.personInfo}>
-                    <Image source={{ uri: p.avatar }} style={localStyles.avatar} />
-                    <Text style={[localStyles.personName, p.paid && localStyles.paidName]}>
-                      {p.name}
-                    </Text>
-                    {p.paid && (
-                      <Text style={localStyles.paidText}>PAGO</Text>
-                    )}
+                  <View style={styles.personInfo}>
+                    <Image source={{ uri: p.avatar }} style={styles.avatar} />
+                    <View style={styles.personNameContainer}>
+                      <Text style={[styles.personName, p.paid && styles.paidName]}>
+                        {p.name}
+                      </Text>
+                      {isImportedPerson(p) && (
+                        <View style={styles.closeBillImportBadge}>
+                          <Icon name="qr-code" size={10} color="#4CAF50" />
+                          <Text style={styles.closeBillImportText}>IMPORTADO</Text>
+                        </View>
+                      )}
+                      {p.paid && (
+                        <Text style={styles.paidText}>PAGO</Text>
+                      )}
+                    </View>
                   </View>
-                  <Text style={[localStyles.price, p.paid && localStyles.paidPrice]}>
+                  <Text style={[styles.price, p.paid && styles.paidPrice]}>
                     {formatCurrency(p.bill)}
                   </Text>
                   
                   <TouchableOpacity 
-                    style={p.paid ? localStyles.unpaidButton : localStyles.paidButton}
+                    style={p.paid ? styles.unpaidButton : styles.paidButton}
                     onPress={() => {
                       onSetPersonPaid(i, !p.paid);
                     }}
                   >
-                    <Text style={localStyles.paidButtonText}>
+                    <Text style={styles.paidButtonText}>
                       {p.paid ? "DESFAZER" : "PG"}
                     </Text>
                   </TouchableOpacity>
@@ -109,379 +238,81 @@ export default function BillingModal({
             ))}
           </View>
           
-          <View style={localStyles.remainingContainer}>
-            <Text style={localStyles.remainingLabel}>Restante a pagar:</Text>
-            <Text style={localStyles.remainingValue}>{formatCurrency(remainingTotal)}</Text>
+          <View style={styles.remainingContainer}>
+            <Text style={styles.remainingLabel}>Restante a pagar:</Text>
+            <Text style={styles.remainingValue}>{formatCurrency(remainingTotal)}</Text>
           </View>
           
-          <TouchableOpacity style={localStyles.voltarButton} onPress={toggleCloseBillMode}>
-            <View style={localStyles.voltarContent}>
-              <Icon name="receipt" size={20} color="black" style={localStyles.voltarIcon} />
-              <Text style={localStyles.voltarText}>VOLTAR</Text>
+          <TouchableOpacity style={styles.voltarButton} onPress={toggleCloseBillMode}>
+            <View style={styles.voltarContent}>
+              <Icon name="receipt" size={20} color="black" style={styles.voltarIcon} />
+              <Text style={styles.voltarText}>VOLTAR</Text>
             </View>
           </TouchableOpacity>
           
           {/* Botão de finalizar mesa - só aparece quando todas as contas estão pagas */}
           {remainingTotal === 0 && (
             <TouchableOpacity 
-              style={localStyles.finishButton}
+              style={styles.finishButton}
               onPress={onCloseBill}
             >
-              <View style={localStyles.voltarContent}>
-                <Icon name="check-circle" size={20} color="black" style={localStyles.voltarIcon} />
-                <Text style={localStyles.voltarText}>FINALIZAR MESA</Text>
+              <View style={styles.voltarContent}>
+                <Icon name="check-circle" size={20} color="black" style={styles.voltarIcon} />
+                <Text style={styles.voltarText}>FINALIZAR MESA</Text>
               </View>
             </TouchableOpacity>
           )}
           
-          <TouchableOpacity style={localStyles.cancelButton} onPress={onClose}>
-            <Text style={localStyles.cancelText}>CANCELAR</Text>
-          </TouchableOpacity>
-        </View>
-      </RNModal>
-    );
-  } else {
-    // Modo de visualização normal da conta
-    return (
-      <RNModal isVisible={visible} backdropColor="black" backdropOpacity={0.8}>
-        <View style={localStyles.modalBox}>
-          <Text style={localStyles.modalTitle}>
-            CONTA DA MESA {tableNumber}
-          </Text>
-          
-          <View style={localStyles.content}>
-            {activePeople.length === 0 ? (
-              <Text style={localStyles.emptyMessage}>
-                Todas as contas estão pagas. Você pode finalizar a mesa.
-              </Text>
-            ) : (
-              activePeople.map((p, i) => {
-                // Encontrar o índice original na lista completa
-                const originalIndex = people.findIndex(person => person === p);
-                return (
-                  <View key={originalIndex}>
-                    <View style={localStyles.personRow}>
-                      <TouchableOpacity 
-                        style={localStyles.checkbox}
-                        onPress={() => onToggle(originalIndex)}
-                      >
-                        {isSelected(originalIndex) ? (
-                          <Icon name="check-box" size={24} color={COLORS.primary} />
-                        ) : (
-                          <Icon name="check-box-outline-blank" size={24} color={COLORS.primary} />
-                        )}
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={localStyles.personInfo}
-                        onPress={() => toggleExpand(originalIndex)}
-                      >
-                        <Image source={{ uri: p.avatar }} style={localStyles.avatar} />
-                        <Text style={localStyles.personName}>{p.name}</Text>
-                      </TouchableOpacity>
-                      
-                      <View style={localStyles.personActions}>
-                        {hasOrders(p) && (
-                          <TouchableOpacity 
-                            onPress={() => toggleExpand(originalIndex)}
-                            style={localStyles.expandButton}
-                          >
-                            <Icon 
-                              name={expandedPerson === originalIndex ? "arrow-drop-up" : "arrow-drop-down"} 
-                              size={24} 
-                              color={COLORS.primary} 
-                            />
-                          </TouchableOpacity>
-                        )}
-                        <Text style={[
-                          localStyles.price, 
-                          !isSelected(originalIndex) && localStyles.priceUnselected
-                        ]}>
-                          {formatCurrency(p.bill)}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {expandedPerson === originalIndex && hasOrders(p) && (
-                      <View style={localStyles.productsList}>
-                        {p.orders.map((order, idx) => (
-                          <View key={idx} style={localStyles.productRow}>
-                            <View style={localStyles.productInfo}>
-                              <Text style={localStyles.productQuantity}>{order.quantity}x</Text>
-                              <Text style={localStyles.productName}>{order.product.name}</Text>
-                            </View>
-                            <View style={localStyles.productActions}>
-                              <Text style={localStyles.productPrice}>
-                                {formatCurrency(order.product.price * order.quantity)}
-                              </Text>
-                              {onRemoveProduct && (
-                                <TouchableOpacity 
-                                  style={localStyles.removeProductButton}
-                                  onPress={() => onRemoveProduct(originalIndex, idx)}
-                                >
-                                  <Icon name="delete" size={18} color="#ff4444" />
-                                </TouchableOpacity>
-                              )}
-                            </View>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-                );
-              })
-            )}
-          </View>
-          
-          <View style={localStyles.totalContainer}>
-            <Text style={localStyles.totalLabel}>
-              TOTAL ({selectedPeople.length} {selectedPeople.length === 1 ? 'pessoa' : 'pessoas'}):
-            </Text>
-            <Text style={localStyles.totalValue}>{formatCurrency(total)}</Text>
-          </View>
-          
-          <TouchableOpacity style={localStyles.closeBillButton} onPress={toggleCloseBillMode}>
-            <View style={localStyles.voltarContent}>
-              <Icon name="payment" size={20} color="black" style={localStyles.voltarIcon} />
-              <Text style={localStyles.voltarText}>FECHAR CONTA</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={localStyles.cancelButton} onPress={onClose}>
-            <Text style={localStyles.cancelText}>FECHAR</Text>
+          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <Text style={styles.cancelText}>CANCELAR</Text>
           </TouchableOpacity>
         </View>
       </RNModal>
     );
   }
-}
 
-const localStyles = StyleSheet.create({
-  modalBox: {
-    backgroundColor: '#111',
-    borderRadius: 10,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    maxHeight: '90%',
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  content: {
-    marginBottom: 15,
-    maxHeight: '60%',
-  },
-  personRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 215, 0, 0.3)',
-  },
-  paidRow: {
-    backgroundColor: 'rgba(0, 128, 0, 0.1)',
-    borderRadius: 4,
-  },
-  checkbox: {
-    marginRight: 10,
-  },
-  personInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  personActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  expandButton: {
-    padding: 4,
-  },
-  avatar: {
-    width: 25,
-    height: 25,
-    borderRadius: 12.5,
-    marginRight: 10,
-  },
-  personName: {
-    color: COLORS.primary,
-    fontSize: 14,
-  },
-  paidName: {
-    color: '#00c853',
-  },
-  paidText: {
-    fontSize: 12,
-    color: '#00c853',
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  price: {
-    color: COLORS.primary,
-    fontSize: 14,
-    marginLeft: 5,
-  },
-  paidPrice: {
-    color: '#00c853',
-  },
-  priceUnselected: {
-    color: 'rgba(255, 215, 0, 0.5)', // Opacidade reduzida para preços de pessoas não selecionadas
-  },
-  paidButton: {
-    backgroundColor: 'green',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  unpaidButton: {
-    backgroundColor: 'rgba(255, 99, 71, 0.8)', // Vermelho acinzentado para desfazer
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  paidButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  productsList: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 215, 0, 0.2)',
-    marginLeft: 34, // Alinhado com o avatar
-  },
-  productRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  productInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  productActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  productQuantity: {
-    color: 'rgba(255, 215, 0, 0.8)',
-    fontSize: 12,
-    marginRight: 8,
-  },
-  productName: {
-    color: 'rgba(255, 215, 0, 0.8)',
-    fontSize: 12,
-    flex: 1,
-  },
-  productPrice: {
-    color: 'rgba(255, 215, 0, 0.8)',
-    fontSize: 12,
-    marginRight: 10,
-  },
-  removeProductButton: {
-    padding: 4,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 68, 68, 0.1)',
-  },
-  remainingContainer: {
-    backgroundColor: COLORS.primary,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 15,
-  },
-  remainingLabel: {
-    color: 'black',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  remainingValue: {
-    color: 'black',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  totalContainer: {
-    backgroundColor: COLORS.primary,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 15,
-  },
-  totalLabel: {
-    color: 'black',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  totalValue: {
-    color: 'black',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  voltarButton: {
-    backgroundColor: COLORS.primary,
-    padding: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  closeBillButton: {
-    backgroundColor: COLORS.primary,
-    padding: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  finishButton: {
-    backgroundColor: 'green',
-    padding: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  voltarContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  voltarIcon: {
-    marginRight: 8,
-  },
-  voltarText: {
-    color: 'black',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    padding: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  cancelText: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  emptyMessage: {
-    color: COLORS.primary,
-    textAlign: 'center',
-    padding: 10,
-  },
-});
+  // Modo de visualização normal da conta com seções separadas
+  return (
+    <RNModal isVisible={visible} backdropColor="black" backdropOpacity={0.8}>
+      <View style={styles.modalBox}>
+        <Text style={styles.modalTitle}>
+          CONTA DA MESA {tableNumber}
+        </Text>
+        
+        <View style={styles.content}>
+          {localPeople.length === 0 && importedPeople.length === 0 ? (
+            <Text style={styles.emptyMessage}>
+              Todas as contas estão pagas. Você pode finalizar a mesa.
+            </Text>
+          ) : (
+            <>
+              {/* Section for local people */}
+              {renderPersonSection(localPeople, "Clientes da Mesa", "person", COLORS.primary)}
+              
+              {/* Section for imported people */}
+              {renderPersonSection(importedPeople, "Clientes Importados", "qr-code", "#4CAF50")}
+            </>
+          )}
+        </View>
+        
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalLabel}>
+            TOTAL ({selectedPeople.length} {selectedPeople.length === 1 ? 'pessoa' : 'pessoas'}):
+          </Text>
+          <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+        </View>
+        
+        <TouchableOpacity style={styles.closeBillButton} onPress={toggleCloseBillMode}>
+          <View style={styles.voltarContent}>
+            <Icon name="payment" size={20} color="black" style={styles.voltarIcon} />
+            <Text style={styles.voltarText}>FECHAR CONTA</Text>
+          </View>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+          <Text style={styles.cancelText}>FECHAR</Text>
+        </TouchableOpacity>
+      </View>
+    </RNModal>
+  );
+}

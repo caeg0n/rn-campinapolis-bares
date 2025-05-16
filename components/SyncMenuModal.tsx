@@ -1,9 +1,8 @@
-// components/SyncMenuModal.tsx - With JSON compression
+// components/SyncMenuModal.tsx - Updated with separated styles
 import React, { useState } from 'react';
 import {
   Alert,
   Dimensions,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View
@@ -12,6 +11,7 @@ import RNModal from 'react-native-modal';
 import QRCode from 'react-native-qrcode-svg';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from '../app/styles';
+import { SyncMenuModalStyles as styles } from '../styles/SyncMenuModalStyles';
 import { Table } from '../types';
 import { JSONCompressor } from '../utils/compressionPako';
 
@@ -218,7 +218,7 @@ export default function SyncMenuModal({
         </View>
         
         <View style={styles.optionsContainer}>
-          <TouchableOpacity style={styles.optionButton} onPress={handleSend}>
+          <TouchableOpacity style={styles.sendOptionButton} onPress={handleSend}>
             <Icon name="qr-code" size={50} color={COLORS.primary} />
             <Text style={styles.optionText}>ENVIAR</Text>
             <Text style={styles.optionDescription}>
@@ -226,10 +226,10 @@ export default function SyncMenuModal({
             </Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.optionButton} onPress={handleReceive}>
-            <Icon name="qr-code-scanner" size={50} color={COLORS.primary} />
-            <Text style={styles.optionText}>RECEBER</Text>
-            <Text style={styles.optionDescription}>
+          <TouchableOpacity style={styles.receiveOptionButton} onPress={handleReceive}>
+            <Icon name="qr-code" size={50} color="black" />
+            <Text style={[styles.optionText, { color: 'black' }]}>RECEBER</Text>
+            <Text style={[styles.optionDescription, { color: 'black' }]}>
               Escanear QR Code para receber dados
             </Text>
           </TouchableOpacity>
@@ -242,164 +242,3 @@ export default function SyncMenuModal({
     </RNModal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalContainer: {
-    backgroundColor: COLORS.card,
-    borderRadius: 10,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  modalInfoText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: 20,
-    opacity: 0.8,
-  },
-  previewContainer: {
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
-  },
-  previewTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 10,
-  },
-  previewItem: {
-    fontSize: 14,
-    color: COLORS.primary,
-    marginBottom: 5,
-  },
-  previewNote: {
-    fontSize: 12,
-    color: COLORS.primary,
-    marginTop: 10,
-    fontStyle: 'italic',
-    opacity: 0.7,
-  },
-  optionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 30,
-  },
-  optionButton: {
-    alignItems: 'center',
-    padding: 20,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 10,
-    width: '45%',
-  },
-  optionText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginTop: 10,
-  },
-  optionDescription: {
-    fontSize: 12,
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginTop: 5,
-    opacity: 0.8,
-  },
-  qrModalContainer: {
-    backgroundColor: '#111111',
-    borderRadius: 15,
-    padding: 15,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    maxHeight: '95%',
-    width: '95%',
-    alignSelf: 'center',
-  },
-  qrTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  qrSubtitle: {
-    fontSize: 16,
-    color: COLORS.primary,
-    marginBottom: 20,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-  qrContainer: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  infoGrid: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  infoText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    marginLeft: 15,
-    fontWeight: '500',
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: 10,
-  },
-  confirmButton: {
-    backgroundColor: COLORS.primary,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '100%',
-  },
-  confirmButtonText: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  closeButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '100%',
-  },
-  closeButtonText: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-});
